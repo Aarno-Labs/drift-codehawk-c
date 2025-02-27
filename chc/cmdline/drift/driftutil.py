@@ -81,13 +81,13 @@ class Project:
     totalUnsafeLines: int = 0
     files: List[File] = field(default_factory=list)
 
-def function_to_Function(fn: "CFunction") -> Function:
+def function_to_Function(fn: "CFunction") -> Optional[Function]:
     lines: List[str] = []
     ppos = fn.get_ppos()
     
     if not fn.has_line_number():
         print_error(f"Function {fn.name} has no source code!")
-        exit(1)
+        return None
 
     fnstartlinenr = fn.get_line_number()
     
@@ -149,6 +149,8 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
         project.files.append(File(path=cfile.targetpath, name=cfile.name))
         for cf in cfile.get_functions():
             function = function_to_Function(cf)
+            if function is None:
+                continue
             project.totalUnsafeLines += len(function.unsafeLines)
             project.files[-1].functions.append(function)
             
