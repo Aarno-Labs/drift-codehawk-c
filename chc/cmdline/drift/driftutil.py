@@ -78,6 +78,7 @@ class File:
 
 @dataclass
 class Project:
+    totalUnsafeLines: int = 0
     files: List[File] = field(default_factory=list)
 
 def function_to_Function(fn: "CFunction") -> Function:
@@ -148,6 +149,7 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
         project.files.append(File(path=cfile.targetpath, name=cfile.name))
         for cf in cfile.get_functions():
             function = function_to_Function(cf)
+            project.totalUnsafeLines += len(function.unsafeLines)
             project.files[-1].functions.append(function)
             
     capp.iter_files(f)
