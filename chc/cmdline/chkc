@@ -64,6 +64,7 @@ import chc.cmdline.c_file.cfiletableutil as CT
 import chc.cmdline.c_project.cprojectutil as P
 import chc.cmdline.juliet.julietutil as J
 import chc.cmdline.kendra.kendrautil as K
+import chc.cmdline.drift.driftutil as D
 
 from chc.util.Config import Config
 import chc.util.loggingutil as UL
@@ -307,6 +308,21 @@ their dependencies and diagnostics for the given test.
     print(descr)
     exit(0)
 
+def driftcommand(args: argparse.Namespace) -> NoReturn:
+    descr = """
+The chkc juliet set of commands is used to produce output for the DRIFT
+toolchain.
+
+The command
+
+> chkc drift asan <tgtpath> <projectname>
+
+produces json output for DRIFT's version of LLVM's AddressSanitizer.  The 
+output provides a list of statements for which chkc could not prove
+that they are safe.
+"""
+    print(descr)
+    exit(0)
 
 def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -603,6 +619,25 @@ def parse() -> argparse.Namespace:
     julietpdashboard.add_argument(
         "--cwe", help="only report results on the given cwe")
     julietpdashboard.set_defaults(func=J.juliet_project_dashboard)
+
+    # --------------------------------------------------------------- drift ---
+
+    # --- DRIFT
+    driftcmd = subparsers.add_parser("drift")
+    driftcmd.set_defaults(func=driftcommand)
+    driftparsers = driftcmd.add_subparsers(title="show options")
+
+    # --- DRIFT asan output
+    driftproject = driftparsers.add_parser("asan")
+    driftproject.add_argument(
+        "tgtpath", help="directory that contains the analysis results")
+    driftproject.add_argument(
+        "projectname", help="name of the project")
+    driftproject.add_argument(
+        "--output", "-o",
+        help=("directory in which to store the analysis artifacts "
+              + "(print to stdout if not provided)"))
+    driftproject.set_defaults(func=D.drift_asan)
 
     # --------------------------------------------------------------- c-file ---
     cfilecmd = subparsers.add_parser("c-file")
@@ -1350,6 +1385,11 @@ def parse() -> argparse.Namespace:
         choices=["a", "w"],
         default="a",
         help="file mode for log file: append (a, default), or write (w)")
+    cprojectanalyze.add_argument(
+        "--singleiter", 
+        action="store_true",
+        help="run the analysis for a single iteration"
+    )
     cprojectanalyze.set_defaults(func=P.cproject_analyze_project)
 
     # --- report
