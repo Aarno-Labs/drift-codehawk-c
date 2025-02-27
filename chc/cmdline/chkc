@@ -1386,8 +1386,9 @@ def parse() -> argparse.Namespace:
         default="a",
         help="file mode for log file: append (a, default), or write (w)")
     cprojectanalyze.add_argument(
-        "--singleiter", 
-        action="store_true",
+        "--iterations", "-i",
+        type=int,
+        default=5,
         help="run the analysis for a single iteration"
     )
     cprojectanalyze.set_defaults(func=P.cproject_analyze_project)

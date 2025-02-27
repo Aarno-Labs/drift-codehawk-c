@@ -170,7 +170,7 @@ def cproject_analyze_project(args: argparse.Namespace) -> NoReturn:
     loglevel: str = args.loglevel
     logfilename: Optional[str] = args.logfilename
     logfilemode: str = args.logfilemode
-    singleiter = args.singleiter
+    iterations = args.iterations
 
     if not os.path.isdir(tgtpath):
         print_error(f"Target directory {tgtpath} not found")
@@ -226,11 +226,11 @@ def cproject_analyze_project(args: argparse.Namespace) -> NoReturn:
             capp.reinitialize_tables()
             capp.update_spos()
 
-        if not singleiter:
-            for i in range(5):
-                capp.update_spos()
-                am.generate_and_check_app("llrvisp", processes=maxprocesses)
-                capp.reinitialize_tables()
+
+        for i in range(iterations):
+            capp.update_spos()
+            am.generate_and_check_app("llrvisp", processes=maxprocesses)
+            capp.reinitialize_tables()
 
     timestamp = os.stat(UF.get_cchpath(targetpath, projectname)).st_ctime
 

@@ -67,7 +67,7 @@ class UnSafeLine:
 @dataclass
 class Function:
     name: str
-    line: int
+    line: int = -1
     unsafeLines: List[UnSafeLine] = field(default_factory=list)
 
 @dataclass
@@ -81,16 +81,16 @@ class Project:
     totalUnsafeLines: int = 0
     files: List[File] = field(default_factory=list)
 
-def function_to_Function(fn: "CFunction") -> Optional[Function]:
+def function_to_Function(fn: "CFunction") -> Function:
     lines: List[str] = []
     ppos = fn.get_ppos()
+
+    fun_start_line = -1
     
     if not fn.has_line_number():
         print_error(f"Function {fn.name} has no source code!")
-        return None
-
-    fnstartlinenr = fn.get_line_number()
-    
+    else: 
+        fun_start_line = fn.get_line_number()
     
     lines: Dict[int, UnSafeLine] = {}
     for ppo in ppos:
@@ -109,7 +109,7 @@ def function_to_Function(fn: "CFunction") -> Optional[Function]:
     sorted_lines = dict(sorted(lines.items(), key=lambda item: item[0]))
 
     function = Function(name=fn.name, 
-                        line=fnstartlinenr,
+                        line=fun_start_line,
                         unsafeLines=list(sorted_lines.values()))
 
     return function
@@ -149,8 +149,6 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
         project.files.append(File(path=cfile.targetpath, name=cfile.name))
         for cf in cfile.get_functions():
             function = function_to_Function(cf)
-            if function is None:
-                continue
             project.totalUnsafeLines += len(function.unsafeLines)
             project.files[-1].functions.append(function)
             
