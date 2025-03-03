@@ -319,13 +319,8 @@ class ParseManager(object):
 
     def set_platform(self, cmd: List[str]) -> None:
         index = self.get_platform_index(cmd)
-        if index >= 0:
-            platform = cmd[index]
-            if platform == self.tgtplatform:
-                return
-            else:
-                cmd[index] = self.tgtplatform
-        else:
+        # append a target platform if it is not already in the original command
+        if index < 0:
             cmd.append(self.tgtplatform)
 
     def preprocess(
