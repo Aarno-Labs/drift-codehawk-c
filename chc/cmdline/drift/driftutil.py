@@ -57,12 +57,23 @@ def print_error(m: str) -> None:
     sys.stderr.write(m + "\n")
     sys.stderr.write(("*" * 80) + "\n")
 
+# enum of PO types
+class POConclusion(Enum):
+    SAFE = "safe"
+    OPEN = "open"
+    VIOLATION = "violation"
+    DELEGATED_API = "delegated-API"
+    DELEGATED_CONTRACT = "delegated-contract"
+
+@dataclass
+class PO:
+    type: str
+    conclusion: POConclusion
+
 @dataclass
 class UnSafeLine:
     line: int
-    openPPOTypes: List[str]
-    violationPPOTypes: List[str]
-    delegatedPPOTypes: List[str]
+    pos: List[PO] = field(default_factory=list)
 
 @dataclass
 class Function:
@@ -89,17 +100,21 @@ def function_to_Function(fn: "CFunction") -> Function:
     
     lines: Dict[int, UnSafeLine] = {}
     for ppo in ppos:
-        if ppo.is_violated or ppo.is_open or ppo.is_delegated:
-            line = ppo.line
-            if line not in lines:
-                lines[line] = UnSafeLine(line=line, openPPOTypes=[], violationPPOTypes=[], delegatedPPOTypes=[])
-            if ppo.is_violated:
-                lines[line].violationPPOTypes.append(ppo.predicate.predicate_name)
-            elif ppo.is_open:
-                lines[line].openPPOTypes.append(ppo.predicate.predicate_name)
-            elif ppo.is_delegated:
-                lines[line].delegatedPPOTypes.append(ppo.predicate.predicate_name)
+        po_cons: POConclusion = POConclusion.SAFE
+        if ppo.is_violated:
+            po_cons = POConclusion.VIOLATION
+        elif ppo.is_open:
+            po_cons = POConclusion.OPEN
+        elif ppo.is_delegated and ppo.get_assumptions_type() != "contract":
+            po_cons = POConclusion.DELEGATED_API
 
+        if po_cons != POConclusion.SAFE:    
+            line = ppo.line
+            po = PO(type = ppo.predicate.predicate_name, conclusion=po_cons)
+            if line in lines:
+                lines[line].pos.append(po)
+            else:
+                lines[line] = UnSafeLine(line=line, pos=[po])
 
     sorted_lines = dict(sorted(lines.items(), key=lambda item: item[0]))
 
