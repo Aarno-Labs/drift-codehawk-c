@@ -633,10 +633,6 @@ def parse() -> argparse.Namespace:
         "tgtpath", help="directory that contains the analysis results")
     driftproject.add_argument(
         "projectname", help="name of the project")
-    driftproject.add_argument(
-        "--output", "-o",
-        help=("directory in which to store the analysis artifacts "
-              + "(print to stdout if not provided)"))
     driftproject.set_defaults(func=D.drift_asan)
 
     # --------------------------------------------------------------- c-file ---

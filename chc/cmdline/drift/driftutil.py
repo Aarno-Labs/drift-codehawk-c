@@ -76,11 +76,6 @@ class File:
     name: str
     functions: List[Function] = field(default_factory=list)
 
-@dataclass
-class Project:
-    totalUnsafeLines: int = 0
-    files: List[File] = field(default_factory=list)
-
 def function_to_Function(fn: "CFunction") -> Function:
     lines: List[str] = []
     ppos = fn.get_ppos()
@@ -131,7 +126,6 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
     # arguments
     tgtpath: str = args.tgtpath
     projectname: str = args.projectname
-    output = args.output
 
     targetpath = os.path.abspath(tgtpath)
     contractpath = os.path.join(targetpath, "chc_contracts")
@@ -143,22 +137,17 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
 
     capp = CApplication(projectpath, projectname, targetpath, contractpath)
 
-    project = Project()
-
     def f(cfile: "CFile") -> None:
-        project.files.append(File(path=cfile.targetpath, name=cfile.name))
+        file = File(path=cfile.targetpath, name=cfile.name + ".c")
         for cf in cfile.get_functions():
             function = function_to_Function(cf)
-            project.totalUnsafeLines += len(function.unsafeLines)
-            project.files[-1].functions.append(function)
+            file.functions.append(function)
+        # assume that we can concatenate the path and name to get the full path
+        # and assume we should append
+        output = os.path.join(file.path, file.name + ".c.codehawk.json")
+        with open(output, "w") as of:
+            json.dump(file, of, cls=CustomEncoder)
             
     capp.iter_files(f)
-
-    if output is None:
-        project_json = json.dumps(project, cls=CustomEncoder, indent=2)
-        print(project_json)
-    else:
-        with open(output, "w") as of:
-            json.dump(project, of, cls=CustomEncoder)
 
     exit(0)
