@@ -144,7 +144,7 @@ def drift_asan(args: argparse.Namespace) -> NoReturn:
             file.functions.append(function)
         # assume that we can concatenate the path and name to get the full path
         # and assume we should append
-        output = os.path.join(file.path, file.name + ".c.codehawk.json")
+        output = os.path.join(file.path, file.name + ".codehawk.json")
         with open(output, "w") as of:
             json.dump(file, of, cls=CustomEncoder)
             
